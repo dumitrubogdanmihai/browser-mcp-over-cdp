@@ -1,0 +1,29 @@
+services:
+  selenoid:
+    image: aerokube/selenoid:latest-release
+    network_mode: bridge
+    ports:
+      - "4444:4444"
+    volumes:
+      - /Users/bogdan/devel/browser-mcp-over-cdp/selenoid/:/etc/selenoid/
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: [
+      "-limit", "4",
+      "-session-attempt-timeout", "60s",
+      "-service-startup-timeout", "60s"
+    ]
+    restart: always
+
+  selenoid-ui:
+    image: aerokube/selenoid-ui:latest-release
+    network_mode: bridge
+    links:
+      - selenoid
+    depends_on:
+      - selenoid
+    environment:
+      - SELENOID_URI=http://selenoid:4444
+    ports:
+      - "8080:8080"
+    restart: always
+    command: ["--selenoid-uri", "http://selenoid:4444"]
