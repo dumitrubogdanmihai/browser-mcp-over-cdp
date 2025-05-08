@@ -9,6 +9,29 @@ class Ax:
         driver.execute_cdp_cmd("DOM.enable", {})
         driver.execute_cdp_cmd("Accessibility.enable", {})
 
+
+    def stringify(self, axNode, depth=0):
+        acc = depth * " "
+
+        acc += "<" + axNode['role']
+
+        if "name" in axNode:
+            acc += " \"" + str(axNode['name'].replace("\"", "'")) + "\""
+
+        if 'backendDOMNodeId' in axNode:
+            acc += " backendDOMNodeId=" + str(axNode['backendDOMNodeId'])
+        
+        if "properties" in axNode:
+            for key, value in axNode['properties'].items():
+                acc += " " + str(key).replace("\"", "'") + "=\"" + str(value).replace("\"", "'") + "\""
+        acc += ">"
+        if "children" in axNode:
+            for child in axNode['children']:
+                acc += "\n" + self.stringify(child, depth + 1)
+
+        acc += "\n" + (depth * " ") + "</" + axNode['role'] + ">"
+        return acc
+
     def getAxTree(self):
         cdpRootAxTree = self.driver.execute_cdp_cmd("Accessibility.getRootAXNode", {})
         cdpFullAXTree = self.driver.execute_cdp_cmd("Accessibility.getFullAXTree", {})
@@ -33,7 +56,7 @@ class Ax:
                 else:
                     child = mapNodeIds[childNodeIdInt]
                 children = children + self.convert_(child, mapBackendNodeIds, mapNodeIds)
-        if node['ignored']:
+        if node['ignored'] or "generic" == node['role']['value'] or ("InlineTextBox" == node['role']['value']):
             return children
         
         if "childNodeCount" in node: del node["childNodeCount"]
@@ -61,6 +84,8 @@ class Ax:
         
         if 'role' in node:
             dict['role'] = node['role']['value']
+        if 'chromeRole' in node:
+            dict['chromeRole'] = node['chromeRole']['value']
         if 'name' in node and node['name']['value']:
             dict['name'] = node['name']['value']
         if 'description' in node:
@@ -69,15 +94,15 @@ class Ax:
             dict['value'] = node['value']['value']
 
         if 'properties' in node:
-            arr = []
+            prop = {}
             for property in node['properties']:
                 if 'value' in property['value']:
-                    arr.append({property['name']: property['value']['value']})
+                    prop[property['name']] = property['value']['value']
                 else:
                     #property {'name': 'labelledby', 'value': {'relatedNodes': [{'backendDOMNodeId': 2959, 'text': 'HTML'}], 'type': 'nodeList'}}
-                    arr.append({property['name']: property['value']})
-            if len(arr) != 0:
-                dict['properties'] = arr
+                    prop[property['name']] = property['value']
+            if len(prop) != 0:
+                dict['properties'] = prop
 
         if children:
             dict['children'] = children
@@ -333,10 +358,15 @@ class Interactor:
 
             type = 'TEXT'
             if 'attributes' in node:
-                for name, value in batched(node['attributes'], n=2):
-                    if name == 'type':
-                        type = value.upper()
-                        break
+                print(node['attributes'])
+                if isinstance(node['attributes'], dict):
+                    if 'type' in node['attributes']:
+                        type = node['attributes']['type'].upper()
+                else:
+                    for name, value in batched(node['attributes'], n=2):
+                        if name == 'type':
+                            type = value.upper()
+                            break
             if type in self.inputTypeWithValue:
                 result = self.driver.execute_cdp_cmd('Runtime.callFunctionOn', {
                     "objectId": nodeObjectId,
@@ -426,6 +456,33 @@ class Dom:
         self.runtime = runtime
         self.css = css
         driver.execute_cdp_cmd("DOM.enable", {})
+        
+    def stringify(self, node, depth=0):
+        acc = depth * " "
+        print()
+        if "#text" == node['nodeName']:
+            acc += node['nodeValue'].replace("\"", "'")
+        else:
+            if "STYLE" == node['nodeName'] or "SCRIPT" == node['nodeName']:
+                return "" 
+            acc += "<" + node['nodeName'] + " backendNodeId=\"" + str(node['backendNodeId']) + "\""
+            
+            if "styles" in node and node['styles']:
+                acc += " style=\""
+                for key, value in node['styles'].items():
+                    acc += " " + key + "=" + value.replace("\"", "'") + ";"
+                acc += "\""
+            if "attributes" in node:
+                for key, value in node['attributes'].items():
+                    if "style" != key:
+                        acc += " " + key + "=\"" + value.replace("\"", "'") + "\""
+            acc += ">"
+            if "children" in node:
+                for child in node['children']:
+                    acc += "\n" + self.stringify(child, depth + 1)
+            acc += "\n" + (depth * " ") + "</" + node['nodeName'] + ">"
+        return acc
+
     def getHtml(self):
         outerHtml = self.driver.execute_cdp_cmd("DOM.getOuterHTML")
         return outerHtml
@@ -435,7 +492,7 @@ class Dom:
         return outerHtml
     
     def getDocument(self):
-        return self.driver.execute_cdp_cmd('DOM.getDocument', {'pierce': True, 'depth': -1});
+        return self.driver.execute_cdp_cmd('DOM.getDocument', {'pierce': True, 'depth': -1})
     def getRichDocument(self):
         document = self.getDocument()
         root = document['root']
@@ -458,18 +515,18 @@ class Dom:
 
         if 'backendNodeId' in node:
             backendNodeId = node['backendNodeId']
-            if node["nodeType"] == 1:
-                listeners = self.runtime.getListeners(backendNodeId)
-                if listeners:
-                    node['listeners'] = listeners
-                nativeInteractions = self.interactor.getNativeInteractions(node)
-                if nativeInteractions:
-                    node['nativeInteractions'] = nativeInteractions
-                styles = self.css.getRelevantStyles(backendNodeId)
-                if styles:
-                    node['styles'] = styles
-                if styles['display'] == 'none' or ('visibility' in node['styles'] and node['styles']['visibility'] == 'hidden'):
-                    return False
+            #if node["nodeType"] == 1:
+                #listeners = self.runtime.getListeners(backendNodeId)
+                #if listeners:
+                #    node['listeners'] = listeners
+                #nativeInteractions = self.interactor.getNativeInteractions(node)
+                #if nativeInteractions:
+                #    node['nativeInteractions'] = nativeInteractions
+                #styles = self.css.getRelevantStyles(backendNodeId)
+                #if styles:
+                #    node['styles'] = styles
+                #if styles['display'] == 'none' or ('visibility' in node['styles'] and node['styles']['visibility'] == 'hidden'):
+                #    return False
         else:
             print("no bnid")
         if 'children' in node:
@@ -501,3 +558,4 @@ class CDP:
         self.interactor = Interactor(driver)
         self.visualizer = Visualizer(driver)
         self.dom = Dom(driver, self.interactor, self.runtime, self.css)
+

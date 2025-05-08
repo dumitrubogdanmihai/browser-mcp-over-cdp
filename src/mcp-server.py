@@ -117,14 +117,14 @@ async def get_page_snapshot_as_accessibility_tree(ctx: Context) -> str:
     """Get a snapshot of the page as an accessibility tree. This is a clear, compact and a higher level representation.
     """
     cdp = ctx.request_context.lifespan_context.cdp
-    return str(cdp.ax.getAxTree())
+    return str(cdp.ax.stringify(cdp.ax.getAxTree()[0]))
 
 @mcp.tool()
 async def get_page_snapshot_as_html_dom(ctx: Context) -> str:
     """Get a snapshot of the page as HTML DOM tree.
     """
     cdp = ctx.request_context.lifespan_context.cdp
-    return str(cdp.dom.getRichDocument())
+    return str(cdp.dom.stringify(cdp.dom.getRichDocument()))
 
 @mcp.tool()
 async def get_page_snapshot_as_jpeg_screenshoot(ctx: Context) -> str:
