@@ -1,0 +1,42 @@
+{
+  "name": "browser-mcp-over-cdp",
+  "version": "0.1.0",
+  "description": "Browser MCP over CDP",
+  "type": "module",
+  "main": "MCP.js",
+  "bin": {
+    "mcp": "./build/MCP.js"
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "buildw": "tsc --project tsconfig.json && chmod 755 build/MCP.js",
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Apache-2.0",
+  "files": [
+    "build"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.11.1",
+    "@types/selenium-webdriver": "^4.1.28",
+    "selenium-webdriver": "^4.32.0",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.27.1",
+    "@babel/preset-env": "^7.27.2",
+    "@babel/preset-typescript": "^7.27.1",
+    "@jest/globals": "^29.7.0",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.15.17",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.3.2",
+    "ts-node": "^10.9.2",
+    "tsc-alias": "^1.8.16",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}

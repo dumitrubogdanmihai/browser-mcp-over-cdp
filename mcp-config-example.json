@@ -1,0 +1,10 @@
+{
+    "mcpServers": {
+        "browser": {
+            "command": "npx",
+            "args": [
+                "--version",
+            ]
+        }
+    }
+}
