@@ -25,6 +25,7 @@ const driver = await new Builder()
   .build() as ChromeDriver;
 
 let cdp = new CDP(driver);
+await cdp.init();
 
 const server = new McpServer({
   name: "Browser CDP",

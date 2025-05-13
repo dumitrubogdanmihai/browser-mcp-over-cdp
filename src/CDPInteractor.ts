@@ -93,10 +93,13 @@ export default class CDPInteractor {
     await this.dom.focus(undefined, backendNodeId);
   }
 
-  async doSendKey(backendNodeId: any, key: string) {
+  async doSendKey(backendNodeId: any, keys: string) {
     await this.doFocus(backendNodeId);
-    await this.input.dispatchKeyEvent("keyDown", undefined, key);
-    await this.input.dispatchKeyEvent("keyUp", undefined, key);
+    for (let i = 0; i < keys.length; i++) {
+      let key = keys.charAt(i);
+      await this.input.dispatchKeyEvent("keyDown", undefined, key);
+      await this.input.dispatchKeyEvent("keyUp", undefined, key);
+    }
   }
 
   async doSetValue(backendNodeId: any, value: any): Promise<string> {

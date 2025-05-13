@@ -142,10 +142,7 @@ describe('cdp', () => {
     }
     
     let inputElement = await getInputElement();
-    await cdp.interactor.doSendKey(inputElement.backendNodeId, "T");
-    await cdp.interactor.doSendKey(inputElement.backendNodeId, "E");
-    await cdp.interactor.doSendKey(inputElement.backendNodeId, "S");
-    await cdp.interactor.doSendKey(inputElement.backendNodeId, "T");
+    await cdp.interactor.doSendKey(inputElement.backendNodeId, "TEST");
     expect(await cdp.interactor.getValue(inputElement.backendNodeId)).toBe("TEST");
   });
 
@@ -199,7 +196,7 @@ describe('cdp', () => {
   test('submit form node', async () => {
     await driver.executeScript(`
       document.body.innerHTML=\`
-        <form onsubmit="arguments[0].preventDefault(); arguments[0].target.setAttribute('data-submitted', true)">
+        <form onsubmit="arguments[0].target.setAttribute('data-submitted', true); return false;">
           <input type="submit" value="Submit">
         </form>
       \`;
@@ -219,6 +216,6 @@ describe('cdp', () => {
     await cdp.interactor.doSubmit(formElement.backendNodeId);
 
     formElement = await getFormElement();
-    expect(formElement.attributes).toContain("data-submitted");
-  }, 60 * 60 * 1000);
+    expect(formElement.attributes?.indexOf("data-submitted")).not.toBe(-1);
+  });
 });
