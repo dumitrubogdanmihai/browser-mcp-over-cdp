@@ -1,12 +1,14 @@
+import process from 'process';
+
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
 import { Builder } from 'selenium-webdriver';
 import ChromeDriver from './ChromeDriver.ts';
-
 import CDP from "./CDP.ts";
 
+const seleniumHubUrl = process.env.SELENIUM_HUB_URL;
 const capabilities = {
   browserName: 'chrome',
   'selenoid:options': {
@@ -17,7 +19,7 @@ const capabilities = {
   }
 };
 const driver = await new Builder()
-  .usingServer('http://localhost:4444/wd/hub')
+  .usingServer(seleniumHubUrl)
   .withCapabilities(capabilities)
   .forBrowser('chrome')
   .build() as ChromeDriver;
@@ -263,13 +265,10 @@ server.tool(
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("Weather MCP Server running on stdio");
+  console.log("Browser MCP Server running on stdio using " + seleniumHubUrl);
 }
 
 main().catch((error) => {
   console.error("Fatal error in main():", error);
   process.exit(1);
 });
-
-console.log("MCP STARTED")
-console.error("MCP STARTED")

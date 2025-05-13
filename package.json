@@ -8,6 +8,7 @@
     "mcp": "./build/MCP.js"
   },
   "scripts": {
+    "run": "npx tsx /Users/bogdan/devel/browser-mcp-over-cdp/src/MCP.ts",
     "build": "tsc --project tsconfig.json",
     "buildw": "tsc --project tsconfig.json && chmod 755 build/MCP.js",
     "test": "jest"
