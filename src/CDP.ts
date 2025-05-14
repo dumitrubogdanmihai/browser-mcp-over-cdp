@@ -48,6 +48,7 @@ export default class CDP {
       await this.driver.sendAndGetDevToolsCommand("Accessibility.enable", {});
       await this.driver.sendAndGetDevToolsCommand("CSS.enable", {});
       await this.driver.sendAndGetDevToolsCommand("Console.enable", {});
+      this.console.init();
     }
 
     async getAxTree(): Promise<string> {

@@ -22,7 +22,7 @@ const driver = await new Builder()
   .usingServer(seleniumHubUrl)
   .withCapabilities(capabilities)
   .forBrowser('chrome')
-  .build() as ChromeDriver;
+  .build() as any;
 
 let cdp = new CDP(driver);
 await cdp.init();
@@ -49,6 +49,22 @@ server.tool(
         {
           type: "text",
           text: "ok",
+        },
+      ],
+    };
+  },
+);
+
+server.tool(
+  "get_console_logs",
+  "Get the console logs as JSON and clear console.",
+  {},
+  () => {
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(cdp.console.getMessages()),
         },
       ],
     };

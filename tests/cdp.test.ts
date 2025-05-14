@@ -218,4 +218,12 @@ describe('cdp', () => {
     formElement = await getFormElement();
     expect(formElement.attributes?.indexOf("data-submitted")).not.toBe(-1);
   });
+
+  test('get console logs', async () => {
+    await driver.executeScript(`console.warn("testmsg")`);
+    await driver.executeScript(`console.warn("testmsg")`);
+    await driver.executeScript(`console.warn("testmsg")`);
+    let logs = cdp.console.getMessages();
+    expect(logs.length).not.toBe(0);
+  });
 });
