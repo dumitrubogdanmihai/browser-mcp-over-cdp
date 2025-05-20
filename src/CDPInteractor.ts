@@ -116,7 +116,7 @@ export default class CDPInteractor {
     if (nodeName === 'select' || nodeName === 'textarea') {
       const resolvedNode = await this.dom.resolveNode(undefined, backendNodeId);
       const nodeObjectId = resolvedNode.objectId;
-      const result = await this.runtime.callFunctionOn("function(value) { this.value = value }", nodeObjectId, [{value}]);
+      const result = await this.runtime.callFunctionOn("function(value) { this.value = value }", nodeObjectId, [{value: value}]);
       if (result.exceptionDetails) {
         throw new Error(JSON.stringify(result, null, 2));
       }
@@ -137,7 +137,7 @@ export default class CDPInteractor {
       }
 
       if (this.inputTypeWithValue.includes(type)) {
-        const result = await this.runtime.callFunctionOn("function(value) { this.value = value }", nodeObjectId, [{value}]);
+        const result = await this.runtime.callFunctionOn("function(valueToSet) { this.value = valueToSet }", nodeObjectId, [{value: value}]);
         if (result.exceptionDetails) {
           throw new Error(JSON.stringify(result, null, 2));
         }
@@ -154,7 +154,7 @@ export default class CDPInteractor {
           return "value should be either 'checked' or 'unchecked'";
         }
 
-        const result = await this.runtime.callFunctionOn("function(checked) { this.checked = checked }", nodeObjectId, [{value: checked}]);
+        const result = await this.runtime.callFunctionOn("function() { this.checked = checked }", nodeObjectId, [{value: checked}]);
         if (result.exceptionDetails) {
           throw new Error(JSON.stringify(result, null, 2));
         }
@@ -181,7 +181,7 @@ export default class CDPInteractor {
     if (nodeName === 'select' || nodeName === 'textarea') {
       const resolvedNode = await this.dom.resolveNode(undefined, backendNodeId);
       const nodeObjectId = resolvedNode.objectId;
-      const result = await this.runtime.callFunctionOn("function(checked) { return this.value }", nodeObjectId);
+      const result = await this.runtime.callFunctionOn("function() { return this.value }", nodeObjectId);
       if (result.exceptionDetails) {
         throw new Error(JSON.stringify(result, null, 2));
       }
@@ -203,7 +203,7 @@ export default class CDPInteractor {
         }
       }
       if (this.inputTypeWithValue.includes(type)) {
-        const result = await this.runtime.callFunctionOn("function(checked) { return this.value }", nodeObjectId);
+        const result = await this.runtime.callFunctionOn("function() { return this.value }", nodeObjectId);
         if (result.exceptionDetails) {
           throw new Error(JSON.stringify(result, null, 2));
         }
@@ -211,7 +211,7 @@ export default class CDPInteractor {
       }
 
       if (this.inputTypeWithCheckedValue.includes(type)) {
-        const result = await this.runtime.callFunctionOn("function(checked) { return this.checked }", nodeObjectId);
+        const result = await this.runtime.callFunctionOn("function() { return this.checked }", nodeObjectId);
         if (result.exceptionDetails) {
           throw new Error(JSON.stringify(result, null, 2));
         }
@@ -237,7 +237,7 @@ export default class CDPInteractor {
     if (nodeName === 'form' || nodeName === 'input') {  // with search type
       const resolvedNode = await this.dom.resolveNode(undefined, backendNodeId);
       const nodeObjectId = resolvedNode.objectId;
-      const result = await this.runtime.callFunctionOn("function(checked) { return this.submit() }", nodeObjectId);
+      const result = await this.runtime.callFunctionOn("function() { return this.submit() }", nodeObjectId);
       if (result.exceptionDetails) {
         throw new Error(JSON.stringify(result, null, 2));
       }
@@ -247,21 +247,28 @@ export default class CDPInteractor {
     }
   }
 
-  async doSelectIndex(backendNodeId: any, index: number): Promise<string> {
+  async doSelectOptionValue(backendNodeId: any, value: string): Promise<string> {
     const node = await this.dom.describeNode(undefined, backendNodeId);
-    return this.doSelectIndexNode(node, index);
+    return this.doSelectOptionValueNode(node, value);
   }
 
-  async doSelectIndexNode(node: any, index: number): Promise<string> {
+  async doSelectOptionValueNode(node: any, theValue: string): Promise<string> {
     const backendNodeId = node.backendNodeId;
     const isElement = node.nodeType === 1;
     if (!isElement) return "not an element";
     const nodeName = node.name?.value || node.localName;
 
-    if (nodeName === 'SELECT') {
+    if (nodeName === 'select') {
       const resolvedNode = await this.dom.resolveNode(undefined, backendNodeId);
       const nodeObjectId = resolvedNode.objectId;
-      const result = await this.runtime.callFunctionOn("function(index) { this.selectedIndex = index }", nodeObjectId, [{ value: index }]);
+      const result = await this.runtime.callFunctionOn(`function(stringValue) {
+          let index = Array.from(this.querySelectorAll("option")).findIndex(option => option.getAttribute("value") === stringValue);
+          if (index !== -1) {
+            this.selectedIndex = index;
+          } else {
+            throw new Error("the option doesn't exit");
+          }
+      }`, nodeObjectId, [{ value: theValue }]);
       if (result.exceptionDetails) {
         throw new Error(JSON.stringify(result, null, 2));
       }

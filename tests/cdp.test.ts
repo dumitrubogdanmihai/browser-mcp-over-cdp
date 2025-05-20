@@ -21,7 +21,7 @@ describe('cdp', () => {
 
   beforeAll(async () => {
     driver = await new Builder()
-      .usingServer('http://localhost:4444/wd/hub')
+      //.usingServer('http://localhost:4444/wd/hub')
       .withCapabilities(capabilities)
       .forBrowser('chrome')
       .build() as ChromeDriver;
@@ -39,10 +39,47 @@ describe('cdp', () => {
   test('get accesibility snapshot', async () => {
     await driver.executeScript(`
         document.body.innerHTML=\`
-          <p aria-label="test">test</p>
+  <h2>FAQ</h2>
+  <div class="accordion">
+    <h3>
+      <button 
+        aria-expanded="false" 
+        aria-controls="panel1" 
+        id="accordion1"
+      >
+        What is ARIA?
+      </button>
+    </h3>
+    <div 
+      id="panel1" 
+      role="region" 
+      aria-labelledby="accordion1" 
+      class="accordion-content" 
+      aria-hidden="true"
+    >
+      ARIA stands for Accessible Rich Internet Applications. It helps make dynamic content more accessible.
+    </div>
+  </div>
         \`;
       `);
-    expect(cdp.getAxTree()).toBe(`{}`);
+    let ax = await cdp.getAxTree();
+    expect(ax.replaceAll(/backendDOMNodeId="[^"]+"/gi, "backendDOMNodeId=\"\""))
+      .toBe(`<RootWebArea "" backendDOMNodeId="" focusable="true" focused="true" url="data:,">
+ <heading "FAQ" backendDOMNodeId="" level="2">
+  <StaticText "FAQ" backendDOMNodeId="">
+   <InlineTextBox "">
+   </InlineTextBox>
+  </StaticText>
+ </heading>
+ <heading "What is ARIA?" backendDOMNodeId="" level="3">
+  <button "What is ARIA?" backendDOMNodeId="" invalid="false" focusable="true" expanded="false">
+   <StaticText "What is ARIA?" backendDOMNodeId="">
+    <InlineTextBox "">
+    </InlineTextBox>
+   </StaticText>
+  </button>
+ </heading>
+</RootWebArea>`);
   });
 
   test('get html snapshot', async () => {
@@ -53,17 +90,17 @@ describe('cdp', () => {
       `);
     let document = await cdp.dom.getDocument(-1, true);
     let documentSerialization = cdp.stringifyDomNode(document, 0);
-    expect(documentSerialization).toBe(`<#document backendNodeId="1">
- <HTML backendNodeId="2">
-  <HEAD backendNodeId="3">
+    expect(documentSerialization.replaceAll(/backendNodeId="[^"]+"/gi, "backendNodeId=\"\""))
+    .toBe(`
+ <HTML backendNodeId=\"\">
+  <HEAD backendNodeId=\"\">
   </HEAD>
-  <BODY backendNodeId="4">
-   <P backendNodeId="5">
+  <BODY backendNodeId=\"\">
+   <P backendNodeId=\"\">
     test
    </P>
   </BODY>
- </HTML>
-</#document>`);
+ </HTML>`);
   });
 
   test('get screenshot snapshot', async () => {
@@ -149,7 +186,7 @@ describe('cdp', () => {
   test('set input node value', async () => {
     await driver.executeScript(`
       document.body.innerHTML=\`
-        <input type="text">
+        <input type="text" value="initvalue">
       \`;
     `);
     let getInputElement = async () => {
@@ -164,6 +201,7 @@ describe('cdp', () => {
     }
     
     let inputElement = await getInputElement();
+    expect(await cdp.interactor.getValue(inputElement.backendNodeId)).toBe("initvalue");
     await cdp.interactor.doSetValue(inputElement.backendNodeId, "TEST");
     expect(await cdp.interactor.getValue(inputElement.backendNodeId)).toBe("TEST");
   });
@@ -189,14 +227,14 @@ describe('cdp', () => {
     }
     
     let selectElement = await getSelectElement();
-    await cdp.interactor.doSelectIndex(selectElement.backendNodeId, 1);
-    expect(await cdp.interactor.getValue(selectElement.backendNodeId)).toBe(1);
+    await cdp.interactor.doSelectOptionValue(selectElement.backendNodeId, "saab");
+    expect(await cdp.interactor.getValue(selectElement.backendNodeId)).toBe("saab");
   });
 
   test('submit form node', async () => {
     await driver.executeScript(`
       document.body.innerHTML=\`
-        <form onsubmit="arguments[0].target.setAttribute('data-submitted', true); return false;">
+        <form action="about://version" method="get" target="_blank">
           <input type="submit" value="Submit">
         </form>
       \`;
@@ -214,9 +252,7 @@ describe('cdp', () => {
     
     let formElement = await getFormElement();
     await cdp.interactor.doSubmit(formElement.backendNodeId);
-
-    formElement = await getFormElement();
-    expect(formElement.attributes?.indexOf("data-submitted")).not.toBe(-1);
+    expect(await (await driver.getAllWindowHandles()).length).toBe(2);
   });
 
   test('get console logs', async () => {

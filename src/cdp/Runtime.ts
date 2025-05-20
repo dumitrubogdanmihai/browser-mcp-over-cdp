@@ -179,7 +179,8 @@ export default class Runtime {
   ) : Promise<CallFunctionReturnObject> {
     let result = await this.driver.sendAndGetDevToolsCommand("Runtime.callFunctionOn", {
       functionDeclaration,
-      objectId
+      objectId,
+      "arguments": theArguments
     }) as CallFunctionReturnObject;
     return result;
   }

@@ -68,17 +68,39 @@ export default class CDP {
       return this.stringifyAxNode(cdpRootAxTree, 0, mapBackendNodeIds, mapNodeIds);
     }
     stringifyAxNode(axNode: AXNode, depth: number, mapBackendNodeIds: { [key: string]: any }, mapNodeIds: { [key: string]: any }): string {
+      let skipNode = "none" === axNode.role?.value;
+      if (skipNode) {
+        let acc = '';
+        if (axNode.childIds) {
+          for (let i = 0; i < axNode.childIds.length; i++) {
+            let childId = axNode.childIds[i];
+            let child : AXNode;
+            if (mapBackendNodeIds[childId]) {
+              child = mapBackendNodeIds[childId];
+            } else if (mapNodeIds[childId]) {
+              child = mapNodeIds[childId];
+            } else {
+              console.warn("miss");
+              continue;
+            }
+            if (i !== 0) {
+              acc += '\n';
+            }
+            acc += this.stringifyAxNode(child, depth, mapBackendNodeIds, mapNodeIds);
+          }
+        }
+        return acc;
+      }
       let acc = ' '.repeat(depth);
-
       acc += `<${axNode.role?.value ?? 'generic'}`;
-      acc += ` "${axNode.name?.value.replace(/\"/g, "'")}"`;
+      acc += ` "${axNode.name?.value.replace(/\"/g, "'") ?? ""}"`;
     
       if (axNode.backendDOMNodeId) {
-        acc += ` backendDOMNodeId=${axNode.backendDOMNodeId}`;
+        acc += ` backendDOMNodeId="${axNode.backendDOMNodeId}"`;
       }
       if (axNode.properties) {
-        for (const [key, value] of Object.entries(axNode.properties)) {
-          acc += ` ${key.replace(/\"/g, "'")}="${String(value).replace(/\"/g, "'")}"`;
+        for (const property of axNode.properties) {
+          acc += ` ${String(property['name']).replace(/\"/g, "'")}="${String(property['value']['value']).replace(/\"/g, "'")}"`;
         }
       }
       acc += '>';
@@ -165,7 +187,10 @@ export default class CDP {
         if (node['nodeName'] === "STYLE" || node['nodeName'] === "SCRIPT") {
           return "";
         }
-        acc += `<${node['nodeName']} backendNodeId="${node['backendNodeId']}"`;
+        let skipElement = node['nodeName'] !== "#document";
+        if (skipElement) {
+          acc += `<${node['nodeName']} backendNodeId="${node['backendNodeId']}"`;
+        }
         if (node.attributes) {
           for (let [key, value] of this.batched(node.attributes, 2)) {
             if (key !== "style") {
@@ -173,13 +198,17 @@ export default class CDP {
             }
           }
         }
-        acc += '>';
+        if (skipElement) {
+          acc += '>';
+        }
         if (node.children) {
           for (let child of node.children) {
             acc += '\n' + this.stringifyDomNode(child, depth + 1);
           }
         }
-        acc += '\n' + ' '.repeat(depth) + `</${node.nodeName}>`;
+        if (skipElement) {
+          acc += '\n' + ' '.repeat(depth) + `</${node.nodeName}>`;
+        }
       }
       return acc;
     }
