@@ -8,7 +8,6 @@ import { Builder } from 'selenium-webdriver';
 import ChromeDriver from './ChromeDriver.ts';
 import CDP from "./CDP.ts";
 
-const seleniumHubUrl = process.env.SELENIUM_HUB_URL;
 const capabilities = {
   browserName: 'chrome',
   'selenoid:options': {
@@ -18,11 +17,14 @@ const capabilities = {
     env: ['LANG=en_US.UTF-8', 'LANGUAGE=us:en', 'LC_ALL=en_US.UTF-8']
   }
 };
-const driver = await new Builder()
-  .usingServer(seleniumHubUrl)
+const builder = new Builder()
   .withCapabilities(capabilities)
-  .forBrowser('chrome')
-  .build() as any;
+  .forBrowser('chrome');
+const seleniumHubUrl = process.env.SELENIUM_HUB_URL;
+if (seleniumHubUrl) {
+  builder.usingServer(seleniumHubUrl);
+}
+const driver = await builder.build() as ChromeDriver
 
 let cdp = new CDP(driver);
 await cdp.init();
@@ -266,13 +268,13 @@ server.tool(
 
 server.tool(
   "do_select_index_on_node_by_id",
-  "Select option index on select node by backendNodeId",
+  "Select option on select node by backendNodeId",
   {
     backendNodeId: "number",
-    index: "number",
+    value: "string",
   },
-  async ( { backendNodeId, index } ) => {
-    cdp.interactor.doSelectIndex(backendNodeId, index);
+  async ( { backendNodeId, value } ) => {
+    cdp.interactor.doSelectOptionValue(backendNodeId, value);
     return {
       content: [{ type: "text", text: "ok" }],
     };
