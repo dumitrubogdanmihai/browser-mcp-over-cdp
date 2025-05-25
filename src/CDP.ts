@@ -8,17 +8,16 @@ import DOMDebugger from "./cdp/DOMDebugger.ts";
 import Runtime from "./cdp/Runtime.ts";
 import Page from "./cdp/Page.ts";
 import Input from "./cdp/Input.ts";
+import Target from "./cdp/Target.ts";
+import Network from "./cdp/Network.ts";
 
 import CDPInteractor from "./CDPInteractor.ts";
-
-// https://www.npmjs.com/package/selenium-webdriver
-// Listen to requestWillBeSent events
-//await driver.onDevToolsEvent('Network.requestWillBeSent', (event) => {
-//  console.log('Request:', event.request.url);
-//});
+import Profiler from './cdp/Profiler.ts';
 
 export default class CDP {
     driver: ChromeDriver;
+    cdpSession: any;
+
     accessibility: Accessibility;
     console: Console;
     css: CSS;
@@ -27,7 +26,10 @@ export default class CDP {
     page: Page;
     runtime: Runtime;
     interactor: CDPInteractor;
-    input: Input; 
+    input: Input;
+    target: Target;
+    network: Network;
+    profiler: Profiler;
 
     constructor(driver: ChromeDriver) {
       this.driver = driver;
@@ -39,6 +41,9 @@ export default class CDP {
       this.domDebugger = new DOMDebugger(driver);
       this.page = new Page(driver);
       this.input = new Input(driver);
+      this.target = new Target(driver);
+      this.network = new Network(driver);
+      this.profiler = new Profiler(driver);
 
       this.interactor = new CDPInteractor(driver, this.dom, this.runtime, this.input);
     }
@@ -48,7 +53,15 @@ export default class CDP {
       await this.driver.sendAndGetDevToolsCommand("Accessibility.enable", {});
       await this.driver.sendAndGetDevToolsCommand("CSS.enable", {});
       await this.driver.sendAndGetDevToolsCommand("Console.enable", {});
-      this.console.init();
+      await this.driver.sendAndGetDevToolsCommand("Network.enable", {});
+
+      this.cdpSession = await this.driver.createCDPConnection('page');
+      this.console.init(this.cdpSession);
+      this.target.init(this.cdpSession);
+      this.network.init(this.cdpSession);
+      this.page.init(this.cdpSession);
+      this.profiler.init(this.cdpSession);
+      this.runtime.init(this.cdpSession);
     }
 
     async getAxTree(): Promise<string> {

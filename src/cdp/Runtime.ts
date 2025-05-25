@@ -158,9 +158,32 @@ export interface CallFunctionReturnObject {
 
 export default class Runtime {
   private driver: ChromeDriver;
+  private cdpSession : any;
+  private messages : any;
 
   constructor(driver: ChromeDriver) {
     this.driver = driver;
+    this.messages = [];
+  }
+
+  async init(cdpSession : any) {
+    await cdpSession.send("Runtime.enable", {});
+
+    cdpSession._wsConnection.on("message", (buffer:any) => {
+      let messageObj = JSON.parse(new TextDecoder().decode(buffer));
+      if (messageObj.method === "Runtime.exceptionThrown") {
+        // [{"method":"Runtime.exceptionThrown","params":{"timestamp":1748172962768.486,"exceptionDetails":{"exceptionId":1,"text":"Uncaught","lineNumber":0,"columnNumber":0,"scriptId":"17","stackTrace":{"callFrames":[{"functionName":"onclick","scriptId":"17","url":"","lineNumber":0,"columnNumber":0}]},"exception":{"type":"object","subtype":"error","className":"ReferenceError","description":"ReferenceError: log is not defined\n    at HTMLButtonElement.onclick (data:,:1:1)","objectId":"2321626513033391675.1.1","preview":{"type":"object","subtype":"error","description":"ReferenceError: log is not defined\n    at HTMLButtonElement.onclick (data:,:1:1)","overflow":false,"properties":[{"name":"stack","type":"string","value":"ReferenceError: log is not defined\n    at HTMLButtonElement.onclick (data:,:1:1)"},{"name":"message","type":"string","value":"log is not defined"}]}},"executionContextId":1}},"sessionId":"8D330913791392529CA5F9221F282C04"}]
+        this.messages.push(messageObj);
+      }
+    });
+  }
+
+  getExceptionThrownMessages() {
+    let toReturn = JSON.stringify(this.messages.map((msg:any) => {
+      return msg.params.exceptionDetails.exception.description.replaceAll("\\n", "\n");
+    }));
+    this.messages = [];
+    return toReturn;
   }
 
   async callFunctionOn(functionDeclaration: String,

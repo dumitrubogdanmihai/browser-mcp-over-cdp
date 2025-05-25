@@ -37,21 +37,18 @@ export enum ConsoleMessageSource {
   
 export default class Console {
   private driver: ChromeDriver;
-
-  cdpSession : any;
-  messages : any;
+  private cdpSession : any;
+  private messages : any;
 
   constructor(driver: ChromeDriver) {
     this.driver = driver;
     this.messages = [];
   }
 
-  async init() {
-    this.cdpSession = await this.driver.createCDPConnection('page') as any;
-
-    await this.cdpSession.send("Console.enable", {});
-
-    this.cdpSession._wsConnection.on("message", (buffer:any) => {
+  async init(cdpSession : any) {
+    await cdpSession.send("Console.enable", {});
+    
+    cdpSession._wsConnection.on("message", (buffer:any) => {
       let messageObj = JSON.parse(new TextDecoder().decode(buffer));
       if (messageObj.method === "Console.messageAdded") {
         //{"method":"Console.messageAdded","params":{"message":{"source":"console-api","level":"log","text":"1","line":1,"column":9}},"sessionId":"48F3EC0D1BBD820773CB574D9F151E10"}
@@ -65,7 +62,11 @@ export default class Console {
   }
 
   getMessages() {
-    let toReturn = JSON.stringify(this.messages);
+    let toReturn = JSON.stringify(this.messages
+      .map((msg : any) => {
+        return msg.message.level + " (" + msg.message.source + "#" + msg.message.line + ":" + msg.message.column + "): " + msg.message.text;
+      })
+    );
     this.messages = [];
     return toReturn;
   }

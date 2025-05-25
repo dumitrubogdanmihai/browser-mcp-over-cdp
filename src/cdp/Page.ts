@@ -142,9 +142,35 @@ export type GatedAPIFeature =
 
 export default  class Page {
   private driver: ChromeDriver;
-
+  cdpSession : any;
+  messages : any;
   constructor(driver: ChromeDriver) {
     this.driver = driver;
+    this.messages = [];
+  }
+
+  async init(cdpSession : any) {
+    await cdpSession.send("Page.enable", {});
+    //await cdpSession.send("Page.setLifecycleEventsEnabled", {enabled: true});
+    
+    cdpSession._wsConnection.on("message", (buffer:any) => {
+      let messageObj = JSON.parse(new TextDecoder().decode(buffer));
+      if (messageObj.method === "Page.windowOpen") {
+        this.messages.push("Open URL in window " + messageObj.params.url);  
+      } else if (messageObj.method === "Page.frameNavigated") {
+        this.messages.push("Navigate frame (" + messageObj.params.type + ") to" +  messageObj.params.frame.url);
+      } else if (messageObj.method === "Page.navigatedWithinDocument") {
+        this.messages.push("Navigate within document (" + messageObj.params.navigationType + ") to" +  messageObj.params.url);
+      } else if (messageObj.method === "Page.navigateToHistoryEntry") {
+        this.messages.push("Navigate within history");
+      }
+    });
+  }
+
+  getMessages() {
+    let toReturn = JSON.stringify(this.messages);
+    this.messages = [];
+    return toReturn;
   }
 
   async captureScreenshot() {
