@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+      "lib": ["es2020"],
+      "target": "es2022",
+      "module": "es2022",
+      "types": ["node"],
+      "moduleResolution": "node",
+      "outDir": "./build",
+      "rootDir": "./",
+      "strict": true,
+      "esModuleInterop": true,
+      "skipLibCheck": true,
+      "forceConsistentCasingInFileNames": true,
+      "sourceMap": true,
+      "isolatedModules": true,
+      "noEmit": true,
+      "allowImportingTsExtensions": true,
+      "preserveConstEnums": true,
+    },
+    "include": ["src/**/*", "tests/**.*"],
+    "exclude": ["node_modules"],
+}
