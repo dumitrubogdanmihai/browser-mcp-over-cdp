@@ -242,6 +242,10 @@ export default class Profiler {
         toReturn.push(profileNode.callFrame.functionName + " " + profileNode.callFrame.lineNumber + ":" + profileNode.callFrame.columnNumber);
       }
     }
-    return toReturn;
+    if (toReturn.length) {
+      return "The following function were called client-side, seen from Profiler/Performance view: " + JSON.stringify(toReturn);
+    } else {
+      return "";
+    }
   }
 }

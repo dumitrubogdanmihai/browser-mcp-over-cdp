@@ -77,7 +77,7 @@ export type TransitionType =
   | 'other';
 
 // Represents the visual viewport.
-export interface VisualViewport {
+export interface VisualSnapshotTakerViewport {
   offsetX: number;
   offsetY: number;
   pageX: number;
@@ -174,7 +174,7 @@ export default  class Page {
   }
 
   async captureScreenshot() {
-    let result = await this.driver.sendAndGetDevToolsCommand("Page.captureScreenshot", {"format": "jpeg", "captureBeyondViewport": true});
+    let result = await this.driver.sendAndGetDevToolsCommand("Page.captureScreenshot", {"format": "jpeg", "captureBeyondViewport": true, fromSurface: true});
     return result.data;
   }
   

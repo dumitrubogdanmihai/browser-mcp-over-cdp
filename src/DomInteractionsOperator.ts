@@ -1,10 +1,11 @@
 import ChromeDriver from './ChromeDriver.ts';
 import { BackendNodeId } from "./cdp/DOM.ts";
-import DOM, {Node} from "./cdp/DOM.js";
+import DOM, {Node} from "./cdp/DOM.ts";
 import Runtime, {CallFunctionReturnObject}  from "./cdp/Runtime.ts";
 import Input from "./cdp/Input.ts"
+import { NameValue } from "./cdp/DOMSnapshot.ts";
 
-export default class CDPInteractor {
+export default class DomInteractionsOperator {
   driver: ChromeDriver;
   dom: DOM;
   runtime: Runtime;
@@ -41,15 +42,57 @@ export default class CDPInteractor {
     return null;
   }
 
-  async getNativeInteractions(node: Node): Promise<string[] | undefined> {
+  getNativeInteractions(node: Node): string[] | undefined {
     const nodeName = node.name || node.localName;
+    return this.getNativeInteractionsFor(nodeName, node.attributes);
+  }
+
+  getNativeInteractionsFor(nodeName: string, attributes: string[]|undefined): string[] | undefined {
     switch (nodeName) {
       case "A":
         return ["doClick"];
       case "INPUT":
         let type = "TEXT";
-        if (node.attributes) {
-          for (let [name, value] of this.batched(node.attributes, 2)) {
+        if (attributes) {
+          for (let [name, value] of this.batched(attributes, 2)) {
+            if (name === 'type') {
+              type = value.toUpperCase();
+              break;
+            }
+          }
+        }
+        if (this.inputTypeWithCheckedValue.includes(type)) {
+          return ["doFocus", "doClick"];
+        }
+        if (this.inputTypeClickable.includes(type)) {
+          return ["doFocus", "doClick"];
+        }
+        if (type === "search") {
+          return ["doFocus", "doSetValue", "doSubmit"];
+        }
+        if (this.inputTypeWithValue.includes(type)) {
+          return ["doFocus", "doSetValue"];
+        }
+        break;
+      case "TEXTAREA":
+        return ["doFocus", "doSetValue"];
+      case "SELECT":
+        return ["doFocus", "doSelectIndex"];
+      case "FORM":
+        return ["doFocus", "doSubmit"];
+      default:
+        return undefined;
+    }
+  }
+
+  getNativeInteractionsForNode(nodeName: string, attributes: NameValue[]|undefined): string[] | undefined {
+    switch (nodeName) {
+      case "A":
+        return ["doClick"];
+      case "INPUT":
+        let type = "TEXT";
+        if (attributes) {
+          for (let {name, value} of attributes) {
             if (name === 'type') {
               type = value.toUpperCase();
               break;

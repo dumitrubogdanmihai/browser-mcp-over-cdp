@@ -201,10 +201,19 @@ export default class DOM {
   }
 
   async querySelectorAll(nodeId: Number, selector: string) : Promise<[NodeId]> {
-    let result = await this.driver.sendAndGetDevToolsCommand("DOM.DOM.querySelectorAll", {
+    let result = await this.driver.sendAndGetDevToolsCommand("DOM.querySelectorAll", {
       nodeId,
       selector
     });
     return result.nodeIds;
+  }
+
+  async getBoxModel(nodeId?: NodeId, backendNodeId?: BackendNodeId, objectId?: Runtime.RemoteObjectId) : Promise<BoxModel> {
+    let result = await this.driver.sendAndGetDevToolsCommand("DOM.getBoxModel", {
+      nodeId,
+      backendNodeId,
+      objectId
+    });
+    return result.model; 
   }
 }

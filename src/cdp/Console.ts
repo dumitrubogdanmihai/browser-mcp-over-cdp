@@ -62,11 +62,14 @@ export default class Console {
   }
 
   getMessages() {
-    let toReturn = JSON.stringify(this.messages
-      .map((msg : any) => {
-        return msg.message.level + " (" + msg.message.source + "#" + msg.message.line + ":" + msg.message.column + "): " + msg.message.text;
-      })
-    );
+    let toReturn = "";
+    if (this.messages.length !== 0) {
+      toReturn = "The following logs appeared in console: " + JSON.stringify(this.messages
+        .map((msg : any) => {
+          return msg.message.level + " (" + msg.message.source + "#" + msg.message.line + ":" + msg.message.column + "): " + msg.message.text;
+        })
+      );
+    }
     this.messages = [];
     return toReturn;
   }

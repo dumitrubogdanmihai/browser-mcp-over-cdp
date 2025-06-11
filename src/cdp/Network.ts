@@ -29,12 +29,16 @@ export default class Target {
   }
 
   getMessages() {
-    let toReturn = JSON.stringify(this.messages.map((entry : any) => {
-      return {
-        url: entry.response?.url,
-        status: entry.response?.status
-      };
-    }), null, 2);
+    let toReturn = "";
+    if (this.messages.length !== 0) {
+      toReturn = "The following requests ended " + JSON.stringify(this.messages.map((entry : any) => {
+        return {
+          url: entry.response?.url,
+          status: entry.response?.status
+        };
+      }), null, 2);
+    }
+    
     this.messages = [];
     return toReturn;
   }

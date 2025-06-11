@@ -47,7 +47,10 @@ export default class Target {
   }
 
   getMessages() {
-    let toReturn = JSON.stringify(this.messages);
+    let toReturn = "";
+    if (this.messages.length !== 0) {
+      toReturn = "The target URL updated: " + JSON.stringify(this.messages);
+    }
     this.messages = [];
     return toReturn;
   }

@@ -8,6 +8,11 @@ import { Builder } from 'selenium-webdriver';
 import ChromeDriver from './ChromeDriver.ts';
 import CDP from "./CDP.ts";
 
+import DomSnapshotTaker from './DomSnapshotTaker.ts';
+import DomInteractionsOperator from "./DomInteractionsOperator.ts";
+import VisualSnapshotTaker from "./VisualSnapshotTaker.ts";
+import A11yTreeSnapshotTaker from "./A11yTreeSnapshotTaker.ts";
+
 const capabilities = {
   browserName: 'chrome',
   'selenoid:options': {
@@ -28,6 +33,11 @@ const driver = await builder.build() as ChromeDriver
 
 let cdp = new CDP(driver);
 await cdp.init();
+
+let domInteractionsOperator = new DomInteractionsOperator(driver, cdp.dom, cdp.runtime, cdp.input);
+let domSnapshotTaker = new DomSnapshotTaker(domInteractionsOperator, cdp.domSnapshot);
+let visualSnapshotTaker = new VisualSnapshotTaker(cdp.page, cdp.dom, cdp.domDebugger, domInteractionsOperator);
+let a11yTreeSnapshotTaker = new A11yTreeSnapshotTaker(cdp.accessibility, cdp.dom, cdp.css);
 
 const server = new McpServer({
   name: "Browser CDP",
@@ -145,7 +155,7 @@ server.tool(
   "Get a snapshot of the page as an accessibility tree. This is a clear, compact and a higher level representation",
   {},
   async () => {
-    let toReturn : string = await cdp.getAxTree();
+    let toReturn : string = await a11yTreeSnapshotTaker.takeNapshot();
     return {
       content: [
         {
@@ -158,15 +168,16 @@ server.tool(
 );
 
 server.tool(
-  "get_page_snapshot_as_html_dom",
-  "Get a snapshot of the page as HTML DOM tree",
+  "get_page_snapshot_as_markdown",
+  "Get a snapshot of the page as Markdown extracted from HTML DOM tree. The links and clickable elements are preceided by the ID (backedNodeId) around square brackets (for e.g. [2]link).",
   {},
   async () => {
+    let toReturn = await domSnapshotTaker.takeSnapshot();
     return {
       content: [
         {
           type: "text",
-          text: cdp.stringifyDomNode(await cdp.dom.getDocument(-1, true)),
+          text: toReturn,
         },
       ],
     };
@@ -175,19 +186,28 @@ server.tool(
 
 server.tool(
   "get_page_snapshot_as_jpeg_screenshoot",
-  "Get a snapshot of the page as a JPEG screenshot.",
+  "Get two snapshots of the page as a JPEG screenshots. The first one is the original image and the second one is enriched with green boxes for interactible elements, each box in the top middle part have the backedNodeId.",
   async () => {
+    let imageBase64 : string = await cdp.page.captureScreenshot();
+    imageBase64 = await cdp.page.captureScreenshot();
+    let domSnapshot = await cdp.domSnapshot.getSnapshot(["display", "position", "opacity"], true, false, true);
     return {
       content: [
         {
           type: "image",
           mimeType: "image/jpeg",
-          data: await cdp.page.captureScreenshot(),
+          data: imageBase64,
+        },
+        {
+          type: "image",
+          mimeType: "image/jpeg",
+          data: await visualSnapshotTaker.drawRects(imageBase64, domSnapshot),
         },
       ],
     };
   }
 );
+
 
 server.tool(
   "do_click_node_by_id",
@@ -196,7 +216,20 @@ server.tool(
     backendNodeId: z.number().describe("The node id."),
   },
   async ( {backendNodeId} ) => {
-    await cdp.interactor.doClick(backendNodeId);
+
+    let pNodeResolved = await cdp.dom.resolveNode(undefined, backendNodeId);
+    if (pNodeResolved.objectId) {
+      let listeners : any = await cdp.domDebugger.getEventListeners(pNodeResolved.objectId);
+      let node = await cdp.dom.describeNode(undefined, backendNodeId);
+      let nativeInteractions : any = domInteractionsOperator.getNativeInteractions(node);
+      if (listeners.length === 0 && nativeInteractions) {
+        return {
+          content: [{ type: "text", text: "The element with backendNodeId " + backendNodeId + " is not clickable." }],
+        };
+      }
+    }
+
+    await domInteractionsOperator.doClick(backendNodeId);
     await driver.wait(async () => {
       const readyState = await driver.executeScript("return document.readyState");
       return readyState === "complete";
@@ -215,7 +248,7 @@ server.tool(
     backendNodeId: z.number().describe("The node id."),
   },
   async ({ backendNodeId }: { backendNodeId: number }) => {
-    await cdp.interactor.doFocus(backendNodeId);
+    await domInteractionsOperator.doFocus(backendNodeId);
     return {
       content: [{ type: "text", text: "ok" }],
     };
@@ -230,7 +263,7 @@ server.tool(
     keysToSend: z.string().describe("The keys to send."),
   },
   async ( { backendNodeId, keysToSend } ) => {
-    await cdp.interactor.doSendKey(backendNodeId, keysToSend);
+    await domInteractionsOperator.doSendKey(backendNodeId, keysToSend);
     return {
       content: [{ type: "text", text: "ok" }],
     };
@@ -245,7 +278,7 @@ server.tool(
     value: z.string().describe("The value to set."),
   },
   async ( { backendNodeId, value  } ) => {
-    await cdp.interactor.doSetValue(backendNodeId, value);
+    await domInteractionsOperator.doSetValue(backendNodeId, value);
     return {
       content: [{ type: "text", text: "ok" }],
     };
@@ -259,7 +292,7 @@ server.tool(
     backendNodeId: z.number().describe("The node id."),
   },
   async ( { backendNodeId } ) => {
-    cdp.interactor.doSubmit(backendNodeId);
+    domInteractionsOperator.doSubmit(backendNodeId);
     return {
       content: [{ type: "text", text: "ok" }],
     };
@@ -274,7 +307,7 @@ server.tool(
     value: "string",
   },
   async ( { backendNodeId, value } ) => {
-    cdp.interactor.doSelectOptionValue(backendNodeId, value);
+    domInteractionsOperator.doSelectOptionValue(backendNodeId, value);
     return {
       content: [{ type: "text", text: "ok" }],
     };
@@ -284,7 +317,6 @@ server.tool(
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.log("Browser MCP Server running on stdio using " + seleniumHubUrl);
 }
 
 main().catch((error) => {

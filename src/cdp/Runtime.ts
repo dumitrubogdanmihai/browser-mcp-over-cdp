@@ -179,9 +179,12 @@ export default class Runtime {
   }
 
   getExceptionThrownMessages() {
-    let toReturn = JSON.stringify(this.messages.map((msg:any) => {
-      return msg.params.exceptionDetails.exception.description.replaceAll("\\n", "\n");
-    }));
+    let toReturn = "";
+    if (this.messages.length !== 0) {
+      toReturn = "Unhandeled exception in browser console: " + JSON.stringify(this.messages.map((msg:any) => {
+        return msg.params.exceptionDetails.exception.description.replaceAll("\\n", "\n");
+      }));
+    }
     this.messages = [];
     return toReturn;
   }
