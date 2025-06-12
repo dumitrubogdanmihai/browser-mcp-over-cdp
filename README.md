@@ -16,10 +16,15 @@ This project exposes tools to navigate, interact and access a browser tab. The b
 The browser is running remotely on Docker using Selenoid with VNC enabled, available at http://localhost:8080/.
 
 # Prereq
-1. Docker and Docker Compose
 2. NodeJS
 
-# Use
+# Use with local Chrome
+1. npm install
+4. put config-example.json configuration inside Cloude, VS Code, Cursor, wherever you want.
+    1. for Cloude see https://modelcontextprotocol.io/quickstart/user
+    2. for Cursor see https://docs.cursor.com/context/model-context-protocol#configuring-mcp-servers
+
+# Use with remote Chrome
 1. run Selenoid Selenium Hub by running the below command inside "selenoid" dir:
     ```
     docker pull selenoid/vnc_chrome:128.0
@@ -27,18 +32,16 @@ The browser is running remotely on Docker using Selenoid with VNC enabled, avail
     docker pull aerokube/selenoid-ui
     docker-compose up -d
     ```
-2. npm install
-4. change absolute paths inside config-example.json and put it inside your Cloude, VS Code, Cursor, wherever you want.
-    1. for Cloude see https://modelcontextprotocol.io/quickstart/user
-    2. for Cursor see https://docs.cursor.com/context/model-context-protocol#configuring-mcp-servers
-5. to see the live browser go to http://localhost:8080/
-
+2. specify the Selenium HUB address via SELENIUM_HUB_URL env var by adding inside config-example.json/mcpServers/browser the following:
+    ```
+    "env": {
+        "SELENIUM_HUB_URL": "http://localhost:4444/wd/hub"
+    }
+    ```
+3. to see the live browser go to http://localhost:8080/
 
 # Warnings
 The Selenoid Selenium Hub configuration uses docker.sock from the host, so it has full control over Docker.
 
 # Troubleshoot
-https://modelcontextprotocol.io/docs/tools/inspector#npm-package:
-    ```
-    npx @modelcontextprotocol/inspector npx tsx /Users/bogdan/devel/browser-mcp-over-cdp/src/MCP.ts
-    ```
+[npx @modelcontextprotocol/inspector npx tsx /Users/bogdan/devel/browser-mcp-over-cdp/src/MCP.ts](https://modelcontextprotocol.io/docs/tools/inspector#npm-package)
