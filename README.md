@@ -16,7 +16,7 @@ This project exposes tools to navigate, interact and access a browser tab. The b
 The browser is running remotely on Docker using Selenoid with VNC enabled, available at http://localhost:8080/.
 
 # Prereq
-2. NodeJS
+1. NodeJS
 
 # Use with local Chrome
 1. npm install
