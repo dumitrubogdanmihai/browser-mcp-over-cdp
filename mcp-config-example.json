@@ -6,10 +6,7 @@
                 "-y",
                 "tsx",
                 "/Users/bogdan/devel/browser-mcp-over-cdp/src/MCP.ts"
-            ],
-            "env": {
-                "SELENIUM_HUB_URL": "http://localhost:4444/wd/hub"
-            }
+            ]
         }
     }
 }   

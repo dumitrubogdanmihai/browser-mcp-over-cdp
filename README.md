@@ -13,7 +13,9 @@ This project exposes tools to navigate, interact and access a browser tab. The b
 2. the page is interactable via click, keys and input value update functions 
 3. the page is navigable with basic open URL, back, forward and reload functions
 
-The browser is running remotely on Docker using Selenoid with VNC enabled, available at http://localhost:8080/.
+![Page visual snapshot enhanced with boxes for interactible elemenents](./doc/visual-enhanced-snapshot.png.png)
+![Page text snapshot enhanced with event listeners for interactible elemenents](./doc/text-enhanced-snapshot.png)
+![Page text snapshot footer that contains page links](./doc/text-enhanced-snapshot-footer.png)
 
 # Prereq
 1. NodeJS

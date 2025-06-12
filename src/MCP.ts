@@ -168,8 +168,8 @@ server.tool(
 );
 
 server.tool(
-  "get_page_snapshot_as_markdown",
-  "Get a snapshot of the page as Markdown extracted from HTML DOM tree. The links and clickable elements are preceided by the ID (backedNodeId) around square brackets (for e.g. [2]link).",
+  "get_page_snapshot_as_text",
+  "Get a snapshot of the page as text extracted from HTML DOM tree. The links and clickable elements are preceided by the ID (backedNodeId) around square brackets (for e.g. [2]link).",
   {},
   async () => {
     let toReturn = await domSnapshotTaker.takeSnapshot();
@@ -186,7 +186,23 @@ server.tool(
 
 server.tool(
   "get_page_snapshot_as_jpeg_screenshoot",
-  "Get two snapshots of the page as a JPEG screenshots. The first one is the original image and the second one is enriched with green boxes for interactible elements, each box in the top middle part have the backedNodeId.",
+  "Get a JPEG screenshots of the page.",
+  async () => {
+    return {
+      content: [
+        {
+          type: "image",
+          mimeType: "image/jpeg",
+          data: await cdp.page.captureScreenshot(),
+        },
+      ],
+    };
+  }
+);
+
+server.tool(
+  "get_enhanced_page_snapshot_as_jpeg_screenshoot",
+  "Get a JPEG screenshots of the page enriched with green boxes for interactible elements, each box in the top middle part has the backedNodeId.",
   async () => {
     let imageBase64 : string = await cdp.page.captureScreenshot();
     imageBase64 = await cdp.page.captureScreenshot();
@@ -196,18 +212,12 @@ server.tool(
         {
           type: "image",
           mimeType: "image/jpeg",
-          data: imageBase64,
-        },
-        {
-          type: "image",
-          mimeType: "image/jpeg",
           data: await visualSnapshotTaker.drawRects(imageBase64, domSnapshot),
-        },
+        }        
       ],
     };
   }
 );
-
 
 server.tool(
   "do_click_node_by_id",

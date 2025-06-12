@@ -13,7 +13,7 @@ export default class DomSnapshotTaker {
 
   async takeSnapshot() {
     let snapshot = await this.domSnapshot.getSnapshot(["display", "position", "opacity"], true, false, true);
-    return this.printText(snapshot.domNodes[0], 0, snapshot) + "\n\n"
+    return await this.printText(snapshot.domNodes[0], 0, snapshot) + "\n\n"
       + this.printLinks(snapshot.domNodes[0], snapshot)
   }
 
