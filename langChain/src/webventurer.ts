@@ -2,10 +2,7 @@ import dotenv, { config } from "dotenv";
 dotenv.config();
 
 import { Annotation } from "@langchain/langgraph";
-import { AIMessage, AIMessageChunk, BaseMessage, ChatMessage, HumanMessage, ToolMessage } from '@langchain/core/messages';
-import { concat } from '@langchain/core/utils/stream';
-import { ConsoleCallbackHandler } from '@langchain/core/tracers/console';
-import { BaseCallbackHandler, HandleLLMNewTokenCallbackFields, NewTokenIndices } from '@langchain/core/callbacks/base';
+import { AIMessage, AIMessageChunk, BaseMessage, ChatMessage, HumanMessage, ToolMessage, SystemMessage } from '@langchain/core/messages';
 
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatOpenAI } from "@langchain/openai";
@@ -13,12 +10,13 @@ import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
-import { zodToJsonSchema } from "zod-to-json-schema";
 
 import { StateGraph } from "@langchain/langgraph";
-import { createReactAgent, ToolNode } from "@langchain/langgraph/prebuilt";
-import { StringOutputParser } from "@langchain/core/output_parsers";
+import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
+
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 
 const AgentState = Annotation.Root({
   task: Annotation<string>,
@@ -29,23 +27,15 @@ const AgentState = Annotation.Root({
   answer: Annotation<string>
 });
 
+import { loadMcpTools } from '@langchain/mcp-adapters';
+
+
 let model : any = new ChatOpenAI({model: "gpt-4o-mini"});
 
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { Serialized } from "@langchain/core/dist/load/serializable";
-import { AgentAction, AgentFinish } from "@langchain/core/agents";
-import { ChainValues } from "@langchain/core/dist/utils/types";
-import { DocumentInterface } from "@langchain/core/dist/documents/document";
-import { LLMResult } from "@langchain/core/outputs";
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-
-import { loadMcpTools } from '@langchain/mcp-adapters';
-import { base64 } from "zod/dist/types/v4";
-import { resolve } from "path";
 const initBrowserMcpClient = async () => {
   const stdioClient = new Client({
-    name: 'Browser CDP',
-    version: '1.0.0'
+    name: 'Webventurer',
+    version: "1.0.0"
   });
   const transport = new StdioClientTransport({
     command: 'npx',
@@ -56,9 +46,9 @@ const initBrowserMcpClient = async () => {
 };
 const browserMcpClient = await initBrowserMcpClient();
 const browserMcpTools = await loadMcpTools('Browser CDP', browserMcpClient);
-const browserMcpToolsWithDo = browserMcpTools.filter(tool => tool.name.startsWith("do_"));
 
-let toolsToAutoInvoke = [
+const distructiveTools = browserMcpTools.filter(tool => tool.name.startsWith("do_"));
+const readOnlyToolNames = [
   "get_current_page_url",
   "get_page_snapshot_as_text",
   "get_page_snapshot_as_accessibility_tree",
@@ -91,7 +81,7 @@ async function planSteps(state: typeof AgentState.State) {
       Here is the interface that you can use to navigate the browser, just as a hint (DO NOT INCLUDE TOOL CALL NAMES IN THE STEP): {availableTools}`;
 
   let availableTools = browserMcpTools
-    .filter(tool => toolsToAutoInvoke.indexOf(tool.name) === -1)
+    .filter(tool => readOnlyToolNames.indexOf(tool.name) === -1)
     .map(tool => `- tool ${tool.name} ${tool.description}\n`);
   
 
@@ -121,7 +111,7 @@ async function getBrowserStateMessages() {
       }
     ]}));
 
-  for (let toolToAutoInvoke of toolsToAutoInvoke) {
+  for (let toolToAutoInvoke of readOnlyToolNames) {
     let tool = browserMcpTools.find(mcpTool => mcpTool.name === toolToAutoInvoke);
     if (!tool) {
       continue;
@@ -237,7 +227,7 @@ async function executeStep(state: typeof AgentState.State) {
     }
   );
 
-  let tools = [responseTool, ...browserMcpToolsWithDo];
+  let tools = [responseTool, ...distructiveTools];
 
   let modelWithTools = model.bindTools(tools);
   let aiMessage = await modelWithTools.invoke(state.stepAiMessages);
