@@ -5,8 +5,9 @@
   "type": "module",
   "main": "main.js",
   "scripts": {
-    "start": "npx tsx src/planAndExecWithMCP.ts",
-    "build": "tsc --project tsconfig.json"
+    "start": "npx tsx src/webventurer.ts",
+    "build": "tsc --project tsconfig.json",
+    "dev": "npx @langchain/langgraph-cli dev"
   },
   "keywords": [],
   "author": "",
@@ -16,12 +17,14 @@
   ],
   "dependencies": {
     "@langchain/anthropic": "^0.3.21",
-    "@langchain/community": "^0.3.45",
-    "@langchain/core": "^0.3.57",
+    "@langchain/community": "^0.3.47",
+    "@langchain/core": "^0.3.64",
+    "@langchain/google-genai": "^0.2.15",
     "@langchain/langgraph": "^0.2.74",
     "@langchain/mcp-adapters": "^0.5.2",
     "@langchain/openai": "^0.5.11",
-    "@modelcontextprotocol/sdk": "^1.11.1",
+    "@modelcontextprotocol/inspector": "^0.16.2",
+    "@modelcontextprotocol/sdk": "^1.17.0",
     "@types/selenium-webdriver": "^4.1.28",
     "dotenv": "^16.5.0",
     "langchain": "^0.3.27",
@@ -33,6 +36,7 @@
     "@babel/preset-env": "^7.27.2",
     "@babel/preset-typescript": "^7.27.1",
     "@jest/globals": "^29.7.0",
+    "@langchain/langgraph-cli": "^0.0.50",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.15.17",
     "babel-jest": "^29.7.0",
