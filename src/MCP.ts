@@ -55,11 +55,7 @@ server.tool(
   "do_navigate-to",
   "Navigate to a page",
   {
-    url: z.string().describe("The URL to navigate to."),
-    readOnlyHint: false,
-    destructiveHint: true,
-    idempotentHint: false,
-    openWorldHint: true
+    url: z.string().describe("The URL to navigate to.")
   },
   async ({ url }) => {
     await driver.get(url);
@@ -78,10 +74,6 @@ server.tool(
   "get_console_logs",
   "Get the console logs as JSON and clear console.",
   {
-    readOnlyHint: true,
-    destructiveHint: false,
-    idempotentHint: false,
-    openWorldHint: true
   },
   () => {
     return {
@@ -99,10 +91,6 @@ server.tool(
   "get_current_page_url",
   "Get the URL of the current page",
   {
-    readOnlyHint: true,
-    destructiveHint: false,
-    idempotentHint: false,
-    openWorldHint: true
   },
   async () => {
     return {
@@ -120,10 +108,6 @@ server.tool(
   "do_go_back",
   "Goes one step backward in the browser history",
   {
-    readOnlyHint: false,
-    destructiveHint: true,
-    idempotentHint: false,
-    openWorldHint: true
   },
   async () => {
     await driver.navigate().back();
@@ -142,10 +126,6 @@ server.tool(
   "do_go_forward",
   "Goes one step forward in the browser history",
   {
-    readOnlyHint: false,
-    destructiveHint: true,
-    idempotentHint: false,
-    openWorldHint: true
   },
   async () => {
     await driver.navigate().forward();
@@ -164,10 +144,6 @@ server.tool(
   "do_reload",
   "Refreshes the current page",
   {
-    readOnlyHint: false,
-    destructiveHint: true,
-    idempotentHint: false,
-    openWorldHint: true
   },
   async () => {
     await driver.navigate().refresh();
@@ -187,10 +163,6 @@ server.tool(
   "get_page_snapshot_as_accessibility_tree",
   "Get a snapshot of the page as an accessibility tree. This is a clear, compact and a higher level representation",
   {
-    readOnlyHint: true,
-    destructiveHint: false,
-    idempotentHint: false,
-    openWorldHint: true
   },
   async () => {
     let toReturn : string = await a11yTreeSnapshotTaker.takeNapshot();
@@ -209,10 +181,6 @@ server.tool(
   "get_page_snapshot_as_text",
   "Get a snapshot of the page as text extracted from HTML DOM tree. The links and clickable elements are preceided by the ID (backedNodeId) around square brackets (for e.g. [2]link).",
   {
-    readOnlyHint: true,
-    destructiveHint: false,
-    idempotentHint: false,
-    openWorldHint: true
   },
   async () => {
     let toReturn = await domSnapshotTaker.takeSnapshot();
@@ -231,10 +199,6 @@ server.tool(
   "get_page_snapshot_as_jpeg_screenshoot",
   "Get a JPEG screenshots of the page.",
   {
-    readOnlyHint: true,
-    destructiveHint: false,
-    idempotentHint: false,
-    openWorldHint: true
   },
   async () => {
     return {
@@ -253,10 +217,6 @@ server.tool(
   "get_page_enhanced_snapshot_as_jpeg_screenshoot",
   "Get a JPEG screenshots of the page enriched with green boxes for interactible elements, each box in the top middle part has the backedNodeId.",
   {
-    readOnlyHint: true,
-    destructiveHint: false,
-    idempotentHint: false,
-    openWorldHint: true
   },
   async () => {
     let imageBase64 : string = await cdp.page.captureScreenshot();
@@ -280,10 +240,6 @@ server.tool(
   {
     backendNodeId: backedNodeIdType,
     nodeDescription: nodeDescription,
-    readOnlyHint: false,
-    destructiveHint: true,
-    idempotentHint: false,
-    openWorldHint: true
   },
   async ( {backendNodeId} ) => {
 
@@ -317,10 +273,6 @@ server.tool(
   {
     backendNodeId: backedNodeIdType,
     nodeDescription: nodeDescription,
-    readOnlyHint: false,
-    destructiveHint: true,
-    idempotentHint: false,
-    openWorldHint: true
   },
   async ({ backendNodeId }) => {
     await domInteractionsOperator.doFocus(backendNodeId);
@@ -337,10 +289,6 @@ server.tool(
     keysToSend: z.string().describe("The keys to send."),
     backendNodeId: backedNodeIdType,
     nodeDescription: nodeDescription,
-    readOnlyHint: false,
-    destructiveHint: true,
-    idempotentHint: false,
-    openWorldHint: true
   },
   async ( { backendNodeId, keysToSend } ) => {
     await domInteractionsOperator.doSendKey(backendNodeId, keysToSend);
@@ -357,10 +305,6 @@ server.tool(
     value: z.string().describe("The value to set."),
     backendNodeId: backedNodeIdType,
     nodeDescription: nodeDescription,
-    readOnlyHint: false,
-    destructiveHint: true,
-    idempotentHint: false,
-    openWorldHint: true
   },
   async ( { backendNodeId, value  } ) => {
     await domInteractionsOperator.doSetValue(backendNodeId, value);
@@ -376,10 +320,6 @@ server.tool(
   {
     backendNodeId: backedNodeIdType,
     nodeDescription: nodeDescription,
-    readOnlyHint: false,
-    destructiveHint: true,
-    idempotentHint: false,
-    openWorldHint: true
   },
   async ( { backendNodeId } ) => {
     domInteractionsOperator.doSubmit(backendNodeId);
@@ -396,10 +336,6 @@ server.tool(
     value: z.string().describe("The value to set."),
     backendNodeId: backedNodeIdType,
     nodeDescription: nodeDescription,
-    readOnlyHint: false,
-    destructiveHint: true,
-    idempotentHint: false,
-    openWorldHint: true
   },
   async ( { backendNodeId, value } ) => {
     domInteractionsOperator.doSelectOptionValue(backendNodeId, value);

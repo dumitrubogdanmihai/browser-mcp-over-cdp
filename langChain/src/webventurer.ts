@@ -51,7 +51,7 @@ const distructiveTools = browserMcpTools.filter(tool => tool.name.startsWith("do
 const readOnlyToolNames = [
   "get_current_page_url",
   "get_page_snapshot_as_text",
-  "get_page_snapshot_as_accessibility_tree",
+  //"get_page_snapshot_as_accessibility_tree",
   "get_page_snapshot_as_jpeg_screenshoot",
   "get_page_enhanced_snapshot_as_jpeg_screenshoot"
 ];
@@ -332,4 +332,4 @@ async function run(task: string) {
   }
 }
 
-//await run("Make me an appointment for ...");
+//await run("Is there any Kia Sportage on olx.ro on petrol, under 25.000k euros, in craiova?");
