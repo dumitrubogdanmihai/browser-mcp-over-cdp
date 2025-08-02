@@ -88,7 +88,7 @@ export default class DomInteractionsOperator {
   getNativeInteractionsForNode(nodeName: string, attributes: NameValue[]|undefined): string[] | undefined {
     switch (nodeName) {
       case "A":
-        return ["doClick"];
+        return ["onClick"];
       case "INPUT":
         let type = "TEXT";
         if (attributes) {
@@ -100,24 +100,24 @@ export default class DomInteractionsOperator {
           }
         }
         if (this.inputTypeWithCheckedValue.includes(type)) {
-          return ["doFocus", "doClick"];
+          return ["onFocus", "onClick"];
         }
         if (this.inputTypeClickable.includes(type)) {
-          return ["doFocus", "doClick"];
+          return ["ooFocus", "onClick"];
         }
         if (type === "search") {
-          return ["doFocus", "doSetValue", "doSubmit"];
+          return ["onFocus", "onChange", "onSubmit"];
         }
         if (this.inputTypeWithValue.includes(type)) {
-          return ["doFocus", "doSetValue"];
+          return ["onFocus", "onChange"];
         }
         break;
       case "TEXTAREA":
-        return ["doFocus", "doSetValue"];
+        return ["onFocus", "onChange"];
       case "SELECT":
-        return ["doFocus", "doSelectIndex"];
+        return ["onFocus", "onSelect"];
       case "FORM":
-        return ["doFocus", "doSubmit"];
+        return ["onFocus", "onSubmit"];
       default:
         return undefined;
     }

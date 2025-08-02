@@ -11,12 +11,16 @@ export default class DomSnapshotTaker {
     this.domSnapshot = domSnapshot;
   }
 
+  capitalizeFirstLetter(val:string):string {
+    return String(val).charAt(0).toUpperCase() + String(val).slice(1);
+  }
+
   async takeSnapshot() {
     let snapshot = await this.domSnapshot.getSnapshot(["display", "position", "opacity"], true, false, true);
     return await this.printText(snapshot.domNodes[0], 0, snapshot) + "\n\n"
       + this.printLinks(snapshot.domNodes[0], snapshot)
   }
-
+  
   printLinks(node: DOMNode, snapshot: DOMSnapshotResultGetSnapshot) {
     let toReturn = "";
     if (node.nodeName === "A") {
@@ -53,6 +57,9 @@ export default class DomSnapshotTaker {
         if (name === "display" && value !== "inline") {
           isBlock = true;
         }
+        if (name === "display" && value === "none") {
+          return "";
+        }
       }
     }
     if (isBlock && !isFirstChild) {
@@ -64,22 +71,31 @@ export default class DomSnapshotTaker {
     if (value) {
       toReturn += "[value='" + value + "']";
     }
-    let nativeInteractions = this.domInteractionsOperator.getNativeInteractionsForNode(node.nodeName, node.attributes);
-    if (nativeInteractions && nativeInteractions.length) {
-      toReturn += "[supports=" + nativeInteractions.join(" ") + "]";
-    }
 
     if (node.nodeName === "A") {
       let attrObj = node.attributes?.find(attrObj => attrObj.name === "href");
       if (attrObj?.value) {
-        toReturn += "[id=" + node.backendNodeId + "][isLink]";
+        let attrValue = attrObj?.value;
+        toReturn += "[href=" + attrValue + "]";
+      }
+    }
+    if (node.nodeName === "IMG") {
+      let attrObj = node.attributes?.find(attrObj => attrObj.name === "title");
+      if (attrObj?.value) {
+        let attrValue = attrObj?.value;
+        toReturn += "[title=" + attrValue + "]";
       }
     }
 
+    let eventListeners : string[] = [];
+    let nativeInteractions = this.domInteractionsOperator.getNativeInteractionsForNode(node.nodeName, node.attributes);
     if (node.eventListeners && node.eventListeners.length !== 0) {
-      for (let eventListener of node.eventListeners) {
-        toReturn += "[on" + eventListener.type + "]";
-      }
+      eventListeners = node.eventListeners
+        .map(listener => "on" + this.capitalizeFirstLetter(listener.type))
+    }
+    let uniqueEventListeners = [...new Set(eventListeners.concat(nativeInteractions ?? []))];
+    for (let eventListenerName of uniqueEventListeners) {
+      toReturn += "[" + eventListenerName + "]";
     }
     if (toReturn) {
       toReturn = " [id=" + node.backendNodeId + "]" + toReturn;

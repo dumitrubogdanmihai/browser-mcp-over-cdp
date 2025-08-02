@@ -48,11 +48,14 @@ const server = new McpServer({
   },
 });
 
+let backedNodeIdType = z.number().describe("The node id.");
+let nodeDescription = z.string().min(10).max(300).describe("Describe the element in human terms, so that a human would be able from this description to find the element in the page, without knowing the id.");
+
 server.tool(
-  "navigate-to",
+  "do_navigate-to",
   "Navigate to a page",
   {
-    url: z.string().url().describe("The URL to navaigate to."),
+    url: z.string().describe("The URL to navigate to."),
   },
   async ({ url }) => {
     await driver.get(url);
@@ -100,7 +103,7 @@ server.tool(
 );
 
 server.tool(
-  "go_back",
+  "do_go_back",
   "Goes one step backward in the browser history",
   {},
   async () => {
@@ -117,7 +120,7 @@ server.tool(
 );
 
 server.tool(
-  "go_forward",
+  "do_go_forward",
   "Goes one step forward in the browser history",
   {},
   async () => {
@@ -134,7 +137,7 @@ server.tool(
 );
 
 server.tool(
-  "reload",
+  "do_reload",
   "Refreshes the current page",
   {},
   async () => {
@@ -149,6 +152,7 @@ server.tool(
     };
   },
 );
+
 
 server.tool(
   "get_page_snapshot_as_accessibility_tree",
@@ -201,7 +205,7 @@ server.tool(
 );
 
 server.tool(
-  "get_enhanced_page_snapshot_as_jpeg_screenshoot",
+  "get_page_enhanced_snapshot_as_jpeg_screenshoot",
   "Get a JPEG screenshots of the page enriched with green boxes for interactible elements, each box in the top middle part has the backedNodeId.",
   async () => {
     let imageBase64 : string = await cdp.page.captureScreenshot();
@@ -223,7 +227,8 @@ server.tool(
   "do_click_node_by_id",
   "Click a node by backendNodeId",
   {
-    backendNodeId: z.number().describe("The node id."),
+    backendNodeId: backedNodeIdType,
+    nodeDescription: nodeDescription
   },
   async ( {backendNodeId} ) => {
 
@@ -255,7 +260,8 @@ server.tool(
   "do_focus_node_by_id",
   "Focus a node by backendNodeId",
   {
-    backendNodeId: z.number().describe("The node id."),
+    backendNodeId: backedNodeIdType,
+    nodeDescription: nodeDescription
   },
   async ({ backendNodeId }: { backendNodeId: number }) => {
     await domInteractionsOperator.doFocus(backendNodeId);
@@ -269,8 +275,9 @@ server.tool(
   "do_send_keys_to_node_by_id",
   "Send keys/text to a node by backendNodeId",
   {
-    backendNodeId: z.number().describe("The node id."),
     keysToSend: z.string().describe("The keys to send."),
+    backendNodeId: backedNodeIdType,
+    nodeDescription: nodeDescription
   },
   async ( { backendNodeId, keysToSend } ) => {
     await domInteractionsOperator.doSendKey(backendNodeId, keysToSend);
@@ -284,8 +291,9 @@ server.tool(
   "do_set_value_to_node_by_id",
   "Set value to a node (input/select/textarea) by backendNodeId",
   {
-    backendNodeId: z.number().describe("The node id."),
     value: z.string().describe("The value to set."),
+    backendNodeId: backedNodeIdType,
+    nodeDescription: nodeDescription
   },
   async ( { backendNodeId, value  } ) => {
     await domInteractionsOperator.doSetValue(backendNodeId, value);
@@ -299,7 +307,8 @@ server.tool(
   "do_submit_node_by_id",
   "Submit a form/search node by backendNodeId",
   {
-    backendNodeId: z.number().describe("The node id."),
+    backendNodeId: backedNodeIdType,
+    nodeDescription: nodeDescription
   },
   async ( { backendNodeId } ) => {
     domInteractionsOperator.doSubmit(backendNodeId);
@@ -313,8 +322,9 @@ server.tool(
   "do_select_index_on_node_by_id",
   "Select option on select node by backendNodeId",
   {
-    backendNodeId: "number",
-    value: "string",
+    value: z.string().describe("The value to set."),
+    backendNodeId: backedNodeIdType,
+    nodeDescription: nodeDescription
   },
   async ( { backendNodeId, value } ) => {
     domInteractionsOperator.doSelectOptionValue(backendNodeId, value);
@@ -325,8 +335,8 @@ server.tool(
 );
 
 async function main() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
+  const stdioTransport = new StdioServerTransport();
+  await server.connect(stdioTransport);
 }
 
 main().catch((error) => {

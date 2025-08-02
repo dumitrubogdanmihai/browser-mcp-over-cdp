@@ -38,7 +38,19 @@ export default class VisualSnapshotTaker {
         
         ctx.drawImage(image, 0, 0);
 
-        await this.drawRectsOn(ctx, snapshot.domNodes[0], snapshot);
+        let frontier = [snapshot.domNodes[0]];
+        let currentNode = frontier.pop();
+        while (currentNode) {
+            if (currentNode.childNodeIndexes) {
+                for (let  [index, childNodeIndex] of currentNode.childNodeIndexes.entries()) {
+                    let child = snapshot.domNodes[childNodeIndex];
+                    frontier.push(child);
+                }
+            }
+            await this.drawRectsOn(ctx, currentNode, snapshot);
+
+            currentNode = frontier.pop();
+        }
 
         const buffer = canvas.toBuffer('image/jpeg', { quality: 1 });
         const base64Output = buffer.toString('base64');
@@ -62,13 +74,6 @@ export default class VisualSnapshotTaker {
             let width = boundingBox.width;
             let height = boundingBox.height;
             this.drawOnCtx(ctx, node.backendNodeId.toString(), x, y, height, width);
-        }
-
-        if (node.childNodeIndexes) {
-            for (let  [index, childNodeIndex] of node.childNodeIndexes.entries()) {
-            let child = snapshot.domNodes[childNodeIndex];
-                await this.drawRectsOn(ctx, child, snapshot);
-            }
         }
     }
 
